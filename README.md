@@ -20,3 +20,24 @@ Project Jupiter is a high-performance Raspberry Pi 5 cluster designed for privat
 - **Clock Speed:** 2600 MHz
 - **Thermal Delta:** +35°C from idle to peak load.
 - **Power Delivery:** PoE+ (802.3at) with active fan curves.
+
+## Installation & Usage
+
+### 1. The Monitoring Dashboard
+To add the Project Jupiter SITREP dashboard to your environment, append the following functions to your `~/.bashrc`:
+
+```bash
+# Project Jupiter SITREP Function
+labstatus() {
+    echo -e "\033[1;34m--- NODE HEALTH: $(hostname) ---\033[0m"
+    echo -ne "CPU Load: " && awk '{print $1, $2, $3}' /proc/loadavg
+    echo -ne "Temp:      " && vcgencmd measure_temp
+    echo -ne "CPU Clock: " && echo "$(($(vcgencmd measure_clock arm | cut -d'=' -f2) / 1000000)) MHz"
+    
+    echo -e "\n\033[1;32m[ACTIVE MODELS]\033[0m"
+    if pgrep -f "ollama runner" > /dev/null; then
+        echo -e "\033[0;32mModel: Loaded & Active\033[0m"
+    else
+        echo "AI Engine: Idle"
+    fi
+}
