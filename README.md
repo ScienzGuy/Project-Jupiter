@@ -1,10 +1,10 @@
-# Project Jupiter: Distributed Edge AI Cluster
+# Pi Project: GAIa - Distributed Edge AI Cluster
 ### Overclocked Raspberry Pi 5 Ollama Cluster with NFS Model Offloading
 
 
 
 ## 1. Executive Summary
-Project Jupiter is a high-availability, distributed AI inference cluster built on the Raspberry Pi 5 platform. This project implements a decoupled storage-compute architecture, separating AI model storage ("The Vault") from AI inference ("The Processor"). By serving model weights over a tuned Network File System (NFS), the cluster achieves stateless compute capabilities, maximizes SD card longevity, and allows for near-instant scaling of inference nodes.
+Project GAIa is a high-availability, distributed AI inference cluster built on the Raspberry Pi 5 platform. This project implements a decoupled storage-compute architecture, separating AI model storage ("The Vault") from AI inference ("The Processor"). By serving model weights over a tuned Network File System (NFS), the cluster achieves stateless compute capabilities, maximizes SD card longevity, and allows for near-instant scaling of inference nodes.
 
 ## 2. System Architecture
 The cluster utilizes a master-worker topology optimized for high-throughput model loading and low-latency local inference:
