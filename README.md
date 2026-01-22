@@ -9,7 +9,7 @@ Project GAIa is a high-availability, distributed AI inference cluster built on t
 ## 2. System Architecture
 The cluster utilizes a master-worker topology optimized for high-throughput model loading and low-latency local inference:
 
-* **The Vault (Node: Io):** Acts as the cluster orchestrator and primary storage gateway. It hosts a 128 GB (137.4 GB) high-speed partition and serves model weights via a tuned **NFSv4** share.
+* **The Vault (Node: Io):** Acts as the cluster orchestrator and primary storage gateway. It hosts a 128 GB high-speed partition and serves model weights via a tuned **NFSv4** share.
 * **The Processor (Node: Europa):** A dedicated compute node optimized for performance. It features a stable **2.6 GHz** (2600 MHz) CPU overclock and a **900 MHz** GPU clock to accelerate tensor operations.
 * **The Interface:** A containerized deployment of **Open WebUI**, orchestrated via Docker on Io, providing a unified management plane for the distributed Ollama API.
 
