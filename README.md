@@ -7,7 +7,7 @@ GAIa (General AI assembly) is a specialized two-node sub-cluster engineered for 
 The project represents a deep-dive into maximizing ARM-based silicon, moving away from the overhead of container orchestration toward a high-performance **Bare Metal** architecture for the inference engine. This design ensures the cluster can handle 7B and 8B parameter models with minimal token-generation latency.
 
 ### 🛠️ Hardware Specification (Nodes: Io & Europa)
-The infrastructure is designed for bursty, high-load AI workloads with a focus on maximum thermal headroom.
+GAIa is tuned for bursty, high-load AI workloads with a focus on maximum thermal headroom.
 
 | Component | Specification |
 | :--- | :--- |
