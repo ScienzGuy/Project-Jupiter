@@ -5,7 +5,7 @@
 ## 🌌 Overview
 GAIa (General AI assembly) is a specialized two-node sub-cluster engineered for private, localized Large Language Model (LLM) inference. This project represents a deep-dive into maximizing ARM-based silicon, moving away from the overhead of container orchestration toward a high-performance **Bare Metal** architecture.
 
-GAIa resides in Sleds 1 and 2 of the **Project Jupiter** 4-bay tower, serving as the "Intelligence Layer" of the rack while its sibling nodes (Sleds 3-4) handle distributed scientific computing via BOINC.
+GAIa resides in Sleds 1 and 2 of the **Project Jupiter** 4-bay tower, serving as the dedicated "Intelligence Layer" of the rack.
 
 ## 🛠️ Hardware Specification (Nodes: Io & Europa)
 The infrastructure is designed for 24/7 high-load stability with a focus on thermal headroom and power delivery.
@@ -49,12 +49,10 @@ Real-time telemetry is handled via **Glances** in server mode, providing a unifi
 * **I/O Wait:** Tracking the health of the NFS model offloading.
 * **SITREP Function:** A custom `.bashrc` function providing instant hardware telemetry upon SSH login.
 
-* ## 🛡️ Security & Hardening
+## 🛡️ Security & Hardening
 With the cluster's move to a permanent basement location, the network stack was hardened for production-level stability:
 * **Software Firewall:** Granular port-blocking and IP-whitelisting for inter-node communication.
 * **Zero Trust NFS:** Restricted export rules ensuring model weights are only accessible to verified cluster nodes.
 
 ---
-
-## 👨‍💻 Maintainer
-**ScienzGuy** [@ScienzGuy](https://github.com/ScienzGuy)
+**Maintained by Scienz_Guy | 2026**
