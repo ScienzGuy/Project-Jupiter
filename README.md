@@ -55,6 +55,6 @@ With the cluster's move to a permanent basement location, the network stack was 
 * **Zero Trust NFS:** Restricted export rules ensuring model weights are only accessible to verified cluster nodes.
 
 ---
-*Note: GAIa shares the Project Jupiter chassis with the Theia sub-cluster. This documentation covers the AI-specific implementation.*
 
-**Maintained by Scienz_Guy | 2026**
+## 👨‍💻 Maintainer
+**ScienzGuy** [@ScienzGuy](https://github.com/ScienzGuy)
