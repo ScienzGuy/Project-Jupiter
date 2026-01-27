@@ -1,58 +1,53 @@
-# GAIa: Distributed Edge AI Sub-Cluster
-### High-Performance Ollama Inference on Overclocked Raspberry Pi 5
-**Part of the [Project Jupiter] Ecosystem**
+# GAIa: Distributed Edge AI Pi Cluster
+## High-Performance Ollama Implementation on Overclocked Pi 5
 
-## 🌌 Overview
-GAIa (General AI assembly) is a specialized two-node sub-cluster engineered for private, localized Large Language Model (LLM) inference. This project represents a deep-dive into maximizing ARM-based silicon, moving away from the overhead of container orchestration toward a high-performance **Bare Metal** architecture.
+### 🌌 Overview
+GAIa (General AI assembly) is a specialized two-node sub-cluster engineered for private, localized Large Language Model (LLM) inference. Comprised of nodes **Io** and **Europa**, GAIa serves as the dedicated "Intelligence Layer" of the infrastructure.
 
-GAIa resides in Sleds 1 and 2 of the **Project Jupiter** 4-bay tower, serving as the dedicated "Intelligence Layer" of the rack.
+The project represents a deep-dive into maximizing ARM-based silicon, moving away from the overhead of container orchestration toward a high-performance **Bare Metal** architecture for the inference engine. This design ensures the cluster can handle 7B and 8B parameter models with minimal token-generation latency.
 
-## 🛠️ Hardware Specification (Nodes: Io & Europa)
-The infrastructure is designed for 24/7 high-load stability with a focus on thermal headroom and power delivery.
+### 🛠️ Hardware Specification (Nodes: Io & Europa)
+The infrastructure is designed for bursty, high-load AI workloads with a focus on maximum thermal headroom.
 
 | Component | Specification |
 | :--- | :--- |
 | **Compute Nodes** | 2x Raspberry Pi 5 (8GB RAM) |
 | **Cooling** | 2x Official Pi 5 Active Coolers (Custom Fan Curves) |
-| **Power** | 2x Waveshare PoE HAT (G) via Netgear PoE+ Managed Switch |
-| **Network** | Physical Ports 1 & 2; Static Internal IP Assignment |
+| **Power** | 2x Waveshare PoE HAT (G) via PoE+ Managed Switch |
+| **Network** | Static Internal IP Assignment; Dedicated Physical Ports |
 | **Storage** | 2x SanDisk 128GB Max Endurance MicroSD (High-Cycle SLC) |
-| **Chassis** | UCTronics 4-Bay Tower (Occupying Sleds 1 & 2) |
 | **Environment** | Dedicated Basement Rack (Sub-20°C Ambient Floor) |
 
-## 🏗️ The "Bare Metal" Engineering Pivot
-Originally conceived as a Docker/Kubernetes orchestrated cluster, GAIa underwent a significant architectural shift following stability testing with 8B-parameter models.
+### 🏗️ The "Bare Metal" Engineering Pivot
+GAIa underwent a significant architectural shift following stability testing. We abandoned Kubernetes and Docker for the core engine due to performance concerns and restrictive container security policies.
 
-### 1. The Container Exit
-To eliminate networking jitter and memory fragmentation, **Ollama was moved to a Bare Metal installation**. This allows the Linux kernel to manage the Pi 5's 8GB LPDDR4X-4267 SDRAM directly, preventing Out-of-Memory (OOM) errors during complex reasoning tasks.
+**1. The Hybrid Architecture**
+While the **Ollama** inference engine runs on bare metal to allow the kernel direct access to the 8GB LPDDR4X RAM, the **Open WebUI** frontend is maintained within a lean Docker container. This ensures the heavy lifting of inference remains unencumbered by container networking layers while providing a modern interface.
 
-### 2. Decoupled Storage (The Vault)
-* **Node: Io (The Vault):** Functions as the cluster's high-speed "Librarian." It hosts a tuned **NFSv4 share** containing the model weights, allowing for stateless compute on secondary nodes.
+**2. Decoupled Storage (The Vault)**
+* **Node: Io (The Vault):** Functions as the "Librarian." It hosts a tuned **NFSv4 share** containing the model weights, allowing for stateless compute on secondary nodes.
 * **Node: Europa (The Specialist):** A dedicated compute engine that mounts "The Vault" to run specialized coding models without local storage overhead.
 
-### 3. Hybrid Frontend
-While the AI engine runs on bare metal, **Open WebUI** is maintained within a lean Docker container. This "Hybrid" approach provides a modern, browser-based interface while ensuring the heavy lifting of inference remains unencumbered by container networking layers.
+### ⚡ Performance Tuning & Thermal Engineering
+GAIa is pushed beyond stock specifications to minimize the "time-to-first-token" and overall inference latency.
 
-## ⚡ Performance Tuning & Thermal Engineering
-GAIa is pushed beyond stock specifications to minimize token-generation latency.
+* **Aggressive Overclock:** Both nodes are tuned to **2.6 GHz** with manual overvolting. This provides a ~20% uplift in raw compute necessary for fluid LLM interactions.
+* **Thermal Management:** Despite the overclock, the sub-20°C ambient basement floor and custom fan curves keep the SoC **under 75°C (167°F)** during peak reasoning tasks.
+* **Inference Optimization:**
+    * **Threads:** Pinned to **4** to align with the physical Cortex-A76 core count.
+    * **Memory:** `num_ctx` is capped at **2048** to ensure the KV cache stays entirely within RAM, preventing SD card swap thrashing.
 
-* **Aggressive Overclock:** Both nodes are tuned to **2.6 GHz** with manual overvolting, providing a ~20% uplift in raw compute.
-* **Inference Optimization:** * **Threads:** Pinned to **4** to align with the physical Cortex-A76 core count.
-    * **Memory Management:** `num_ctx` is capped at **2048** to ensure the KV cache stays entirely within RAM, preventing performance-killing SD card swap thrashing.
+### 📈 Monitoring (SITREP)
+* **Real-Time Telemetry:** Handled via **Glances** in server mode, monitoring the delta between basement ambient and the 2.6GHz peak load.
+* **SITREP Function:** A custom `.bashrc` function providing instant hardware telemetry and NFS mount health upon SSH login.
 * **Model Roster:**
-    * **Io:** `llama3.2:3b` (Fast Utility) & `deepseek-r1:8b` (Complex Reasoning).
+    * **Io:** `llama3.2:3b` (Utility) & `deepseek-r1:8b` (Complex Reasoning).
     * **Europa:** `qwen2.5-coder:7b` (Technical/Scripting).
 
-## 📈 Monitoring (SITREP)
-Real-time telemetry is handled via **Glances** in server mode, providing a unified dashboard for:
-* **SoC Thermals:** Monitoring the delta between basement ambient and the 2.6GHz peak load.
-* **I/O Wait:** Tracking the health of the NFS model offloading.
-* **SITREP Function:** A custom `.bashrc` function providing instant hardware telemetry upon SSH login.
-
-## 🛡️ Security & Hardening
-With the cluster's move to a permanent basement location, the network stack was hardened for production-level stability:
-* **Software Firewall:** Granular port-blocking and IP-whitelisting for inter-node communication.
+### 🛡️ Security & Hardening
 * **Zero Trust NFS:** Restricted export rules ensuring model weights are only accessible to verified cluster nodes.
+* **Software Firewall:** Granular port-blocking and IP-whitelisting for inter-node communication.
 
 ---
-**Maintained by Scienz_Guy | 2026**
+
+Maintained by Scienz_Guy | 2026
