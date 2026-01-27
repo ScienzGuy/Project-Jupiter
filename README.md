@@ -1,86 +1,60 @@
-# Pi Project: GAIa - Distributed Edge AI Cluster
-### Overclocked Raspberry Pi 5 Ollama Cluster with NFS Model Offloading
+# GAIa: Distributed Edge AI Sub-Cluster
+### High-Performance Ollama Inference on Overclocked Raspberry Pi 5
+**Part of the [Project Jupiter] Ecosystem**
 
+## 🌌 Overview
+GAIa (General AI assembly) is a specialized two-node sub-cluster engineered for private, localized Large Language Model (LLM) inference. This project represents a deep-dive into maximizing ARM-based silicon, moving away from the overhead of container orchestration toward a high-performance **Bare Metal** architecture.
 
+GAIa resides in Sleds 1 and 2 of the **Project Jupiter** 4-bay tower, serving as the "Intelligence Layer" of the rack while its sibling nodes (Sleds 3-4) handle distributed scientific computing via BOINC.
 
-## 1. Executive Summary
-Project GAIa is a high-availability, distributed AI inference cluster built on the Raspberry Pi 5 platform. This project implements a decoupled storage-compute architecture, separating AI model storage ("The Vault") from AI inference ("The Processor"). By serving model weights over a tuned Network File System (NFS), the cluster achieves stateless compute capabilities, maximizes SD card longevity, and allows for near-instant scaling of inference nodes.
+## 🛠️ Hardware Specification (Nodes: Io & Europa)
+The infrastructure is designed for 24/7 high-load stability with a focus on thermal headroom and power delivery.
 
-## 2. System Architecture
-The cluster utilizes a master-worker topology optimized for high-throughput model loading and low-latency local inference:
+| Component | Specification |
+| :--- | :--- |
+| **Compute Nodes** | 2x Raspberry Pi 5 (8GB RAM) |
+| **Cooling** | 2x Official Pi 5 Active Coolers (Custom Fan Curves) |
+| **Power** | 2x Waveshare PoE HAT (G) via Netgear PoE+ Managed Switch |
+| **Network** | Physical Ports 1 & 2; Static Internal IP Assignment |
+| **Storage** | 2x SanDisk 128GB Max Endurance MicroSD (High-Cycle SLC) |
+| **Chassis** | UCTronics 4-Bay Tower (Occupying Sleds 1 & 2) |
+| **Environment** | Dedicated Basement Rack (Sub-20°C Ambient Floor) |
 
-* **The Vault (Node: Io):** Acts as the cluster orchestrator and primary storage gateway. It utilizes a **128GB SanDisk Max Endurance** microSD to host the OS and the primary model repository, served via a tuned **NFSv4** share.
-* **The Processor (Node: Europa):** A dedicated compute node optimized for performance. Powered by a **Waveshare PoE HAT (G)**, it maintains a stable **2.6 GHz** CPU overclock. It mounts the AI models remotely, keeping its local storage "stateless."
-* **Network Backbone:** All nodes are interconnected via a **Netgear PoE switch**, providing both high-speed data transfer for the NFS mount and 802.3at power delivery to the Waveshare HATs.
-* **The Interface:** A containerized deployment of **Open WebUI**, orchestrated via Docker on Io, providing a unified management plane for the distributed Ollama API.
+## 🏗️ The "Bare Metal" Engineering Pivot
+Originally conceived as a Docker/Kubernetes orchestrated cluster, GAIa underwent a significant architectural shift following stability testing with 8B-parameter models.
+
+### 1. The Container Exit
+To eliminate networking jitter and memory fragmentation, **Ollama was moved to a Bare Metal installation**. This allows the Linux kernel to manage the Pi 5's 8GB LPDDR4X-4267 SDRAM directly, preventing Out-of-Memory (OOM) errors during complex reasoning tasks.
+
+### 2. Decoupled Storage (The Vault)
+* **Node: Io (The Vault):** Functions as the cluster's high-speed "Librarian." It hosts a tuned **NFSv4 share** containing the model weights, allowing for stateless compute on secondary nodes.
+* **Node: Europa (The Specialist):** A dedicated compute engine that mounts "The Vault" to run specialized coding models without local storage overhead.
+
+### 3. Hybrid Frontend
+While the AI engine runs on bare metal, **Open WebUI** is maintained within a lean Docker container. This "Hybrid" approach provides a modern, browser-based interface while ensuring the heavy lifting of inference remains unencumbered by container networking layers.
+
+## ⚡ Performance Tuning & Thermal Engineering
+GAIa is pushed beyond stock specifications to minimize token-generation latency.
+
+* **Aggressive Overclock:** Both nodes are tuned to **2.6 GHz** with manual overvolting, providing a ~20% uplift in raw compute.
+* **Inference Optimization:** * **Threads:** Pinned to **4** to align with the physical Cortex-A76 core count.
+    * **Memory Management:** `num_ctx` is capped at **2048** to ensure the KV cache stays entirely within RAM, preventing performance-killing SD card swap thrashing.
+* **Model Roster:**
+    * **Io:** `llama3.2:3b` (Fast Utility) & `deepseek-r1:8b` (Complex Reasoning).
+    * **Europa:** `qwen2.5-coder:7b` (Technical/Scripting).
+
+## 📈 Monitoring (SITREP)
+Real-time telemetry is handled via **Glances** in server mode, providing a unified dashboard for:
+* **SoC Thermals:** Monitoring the delta between basement ambient and the 2.6GHz peak load.
+* **I/O Wait:** Tracking the health of the NFS model offloading.
+* **SITREP Function:** A custom `.bashrc` function providing instant hardware telemetry upon SSH login.
+
+* ## 🛡️ Security & Hardening
+With the cluster's move to a permanent basement location, the network stack was hardened for production-level stability:
+* **Software Firewall:** Granular port-blocking and IP-whitelisting for inter-node communication.
+* **Zero Trust NFS:** Restricted export rules ensuring model weights are only accessible to verified cluster nodes.
 
 ---
+*Note: GAIa shares the Project Jupiter chassis with the BOINC sub-cluster. This documentation covers the AI-specific implementation.*
 
-## 3. Hardware Configuration
-
-| Component | Specification (Io - The Vault) | Specification (Europa - The Processor) |
-| :--- | :--- | :--- |
-| **Model** | Raspberry Pi 5 (8 GB) | Raspberry Pi 5 (8 GB) |
-| **CPU Clock** | 2.4 GHz (Stock) | **2.6 GHz (Overclocked)** |
-| **GPU Clock** | 800 MHz (Stock) | **900 MHz (Overclocked)** |
-| **Cooling** | Official Pi 5 Active Cooler | Official Pi 5 Active Cooler |
-| **Power** | Waveshare PoE HAT (G) | Waveshare PoE HAT (G) |
-| **Local Storage** | 128GB SanDisk Max Endurance | 128GB SanDisk Max Endurance |
-| **Enclosure** | UCTronics 4-Bay Tower (Sled 1) | UCTronics 4-Bay Tower (Sled 2) |
-| **Networking** | Netgear PoE Switch (Port 1) | Netgear PoE Switch (Port 2) |
-
----
-
-## 4. Physical Build & Thermal Design
-The cluster is integrated into a high-density **UCTronics 4-Bay Tower Case**, serving as a multi-project edge computing hub. 
-
-* **Physical Layout:** Project Jupiter occupies the top half of the stack (**Sled 1: Io** and **Sled 2: Europa**). The remaining two slots (**Sleds 3 and 4**) are dedicated to independent distributed computing nodes for the BOINC project.
-* **Thermal Management:** Each node utilizes the **Official Raspberry Pi 5 Active Cooler**. This vertical orientation, combined with the open-frame design of the UCTronics tower, ensures that the heat generated by the 2.6 GHz overclock on Europa is efficiently dissipated, even with secondary heat sources (the BOINC nodes) operating in the same chassis.
-* **Cabling & Power:** High-density power delivery is achieved via **Waveshare PoE HAT (G)** modules on all nodes, consolidated into a **Netgear PoE switch**. This configuration minimizes the thermal footprint of external power supplies and provides a single-cable solution for power and high-speed data.
-
-## 5. Key Engineering Features
-* **Decoupled Model Residency:** By mounting `/var/lib/ollama` over NFS, multi-gigabyte model weights are stored once but accessible by any node in the cluster. This architecture prevents redundant downloads and protects flash storage from heavy write cycles.
-* **Thermal Management:** Europa is tuned to a 2.6 GHz performance profile. Managed active cooling ensures a thermal ceiling of **65°C** (149°F), preventing thermal throttling during sustained LLM inference.
-* **SITREP Telemetry:** A custom Bash-based monitoring suite provides real-time visibility into the cluster's internal state, including PMIC status, clock speeds, and active model residency.
-
-## 6. Deployment & Telemetry
-
-### The SITREP Dashboard
-To implement the Project Jupiter SITREP dashboard, append the following function to your `~/.bashrc`. This provides an instantaneous health check for any node in the cluster.
-
-```bash
-# Project Jupiter SITREP Function
-labstatus() {
-    echo -e "\033[1;34m--- NODE HEALTH: $(hostname) ---\033[0m"
-    echo -ne "CPU Load: " && awk '{print $1, $2, $3}' /proc/loadavg
-    echo -ne "Temp:      " && vcgencmd measure_temp
-    echo -ne "CPU Clock: " && echo "$(($(vcgencmd measure_clock arm | cut -d'=' -f2) / 1000000)) MHz"
-    
-    echo -e "\n\033[1;32m[ACTIVE MODELS]\033[0m"
-    if pgrep -f "ollama runner" > /dev/null; then
-        echo -e "\033[0;32mModel: Loaded & Active\033[0m"
-    else
-        echo "AI Engine: Idle"
-    fi
-}
-```
-
-## 6. Current Benchmarks
-* **Primary Inference Models:** DeepSeek-R1 8B (Distilled), Llama 3.1 8B.
-* **Operational Temperature:** ~42°C (107.6°F) Idle | ~64°C (147.2°F) Peak Load.
-* **Throughput:** Optimized for ~3–4 tokens per second on 8B parameter models.
-
-## 7. Technical Challenges & Resolutions
-
-### Challenge: Inter-Node Administrative Visibility
-**Issue:** Standard terminal-based management made it difficult to monitor both Io and Europa simultaneously without multiple SSH sessions. Installing a full Desktop GUI was rejected to preserve system resources for LLM inference.
-**Resolution:** Deployed **Cockpit** on Io and linked Europa as a managed node. This provides a lightweight, web-based SITREP for both nodes, allowing for real-time monitoring of CPU load and temperature across the cluster from a single dashboard.
-
-### Challenge: NFS Permission & Service Persistence
-**Issue:** During the initial setup of "The Vault," the Ollama service on Europa could not write to the NFS mount due to UID/GID mismatches between the two nodes, and the `cockpit.socket` failed to initialize on boot.
-**Resolution:** 1. Synchronized the `piadmin` user IDs across both nodes and updated the `/etc/exports` configuration on Io to use `no_root_squash`.
-2. Reinstalled the `cockpit-pinger` and `cockpit-bridge` packages on Europa to ensure the service socket correctly listens for requests from the Io head node.
-
-### Challenge: Thermal Throttling at 2.6 GHz
-**Issue:** Under sustained load (Llama 3.1 8B inference), Europa's SoC temperature would climb toward the 80°C (176°F) throttle point.
-**Resolution:** Implemented a custom firmware-level fan curve via `config.txt` and optimized the physical placement of the cluster to ensure high-volume airflow, successfully capping peak loads at **65°C** (149°F).
+**Maintained by Scienz_Guy | 2026**
